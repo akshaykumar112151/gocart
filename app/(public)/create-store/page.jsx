@@ -27,17 +27,56 @@ export default function CreateStore() {
     }
 
     const fetchSellerStatus = async () => {
-        // Logic to check if the store is already submitted
-
-
+        try {
+            const res = await fetch('/api/store/my-store')
+            const data = await res.json()
+            if (data.store) {
+                setAlreadySubmitted(true)
+                setStatus(data.store.status)
+                if (data.store.status === "pending") {
+                    setMessage("Your store is under review. Please wait for admin approval.")
+                } else if (data.store.status === "approved") {
+                    setMessage("Your store is approved! Redirecting to dashboard...")
+                } else {
+                    setMessage("Your store was rejected. Please contact support.")
+                }
+            }
+        } catch (error) {
+            console.error(error)
+        }
         setLoading(false)
     }
 
     const onSubmitHandler = async (e) => {
         e.preventDefault()
-        // Logic to submit the store details
-
-
+        try {
+            const formData = new FormData()
+            formData.append('name', storeInfo.name)
+            formData.append('username', storeInfo.username)
+            formData.append('description', storeInfo.description)
+            formData.append('email', storeInfo.email)
+            formData.append('contact', storeInfo.contact)
+            formData.append('address', storeInfo.address)
+            if (storeInfo.image) {
+                formData.append('image', storeInfo.image)
+            }
+            const res = await fetch('/api/store/create', {
+                method: 'POST',
+                body: formData
+            })
+            const data = await res.json()
+            if (data.success) {
+                setAlreadySubmitted(true)
+                setStatus("pending")
+                setMessage("Store submitted! Waiting for admin approval.")
+                toast.success("Store submitted successfully!")
+            } else {
+                toast.error(data.message || "Something went wrong!")
+            }
+        } catch (error) {
+            toast.error("Something went wrong!")
+            console.error(error)
+        }
     }
 
     useEffect(() => {
@@ -49,7 +88,6 @@ export default function CreateStore() {
             {!alreadySubmitted ? (
                 <div className="mx-6 min-h-[70vh] my-16">
                     <form onSubmit={e => toast.promise(onSubmitHandler(e), { loading: "Submitting data..." })} className="max-w-7xl mx-auto flex flex-col items-start gap-3 text-slate-500">
-                        {/* Title */}
                         <div>
                             <h1 className="text-3xl ">Add Your <span className="text-slate-800 font-medium">Store</span></h1>
                             <p className="max-w-lg">To become a seller on GoCart, submit your store details for review. Your store will be activated after admin verification.</p>
@@ -79,7 +117,7 @@ export default function CreateStore() {
                         <p>Address</p>
                         <textarea name="address" onChange={onChangeHandler} value={storeInfo.address} rows={5} placeholder="Enter your store address" className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded resize-none" />
 
-                        <button className="bg-slate-800 text-white px-12 py-2 rounded mt-10 mb-40 active:scale-95 hover:bg-slate-900 transition ">Submit</button>
+                        <button className="bg-slate-800 text-white px-12 py-2 rounded mt-10 mb-40 active:scale-95 hover:bg-slate-900 transition">Submit</button>
                     </form>
                 </div>
             ) : (

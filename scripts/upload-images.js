@@ -1,0 +1,85 @@
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+
+async function main() {
+    const store = await prisma.store.findFirst()
+    
+    if (!store) {
+        console.log('No store found!')
+        return
+    }
+
+    console.log('Found store:', store.name)
+
+    // Pehle purane products delete karo
+    await prisma.product.deleteMany({ where: { storeId: store.id } })
+    console.log('Deleted old products')
+
+    const products = [
+        {
+            name: "Apple AirPods Pro",
+            description: "Active Noise Cancellation, Transparency mode, Spatial Audio",
+            mrp: 249,
+            price: 199,
+            category: "Electronics",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181091/bg84ycsqvzblnoie6azh.png"],
+            storeId: store.id
+        },
+        {
+            name: "Smart Watch Series 8",
+            description: "Health monitoring, GPS, Water resistant",
+            mrp: 399,
+            price: 299,
+            category: "Electronics",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181092/apo8xo4wxajiopwtcqqg.png"],
+            storeId: store.id
+        },
+        {
+            name: "Wireless Headphones",
+            description: "30hr battery, Noise cancellation, Premium sound",
+            mrp: 199,
+            price: 149,
+            category: "Electronics",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181094/l8njpq17z0vx25pgln7u.png"],
+            storeId: store.id
+        },
+        {
+            name: "Smart Speaker",
+            description: "360 sound, Voice assistant, Multi-room audio",
+            mrp: 99,
+            price: 79,
+            category: "Electronics",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181097/abbo1oexzinzx2d3n7hf.png"],
+            storeId: store.id
+        },
+        {
+            name: "Security Camera",
+            description: "4K resolution, Night vision, Motion detection",
+            mrp: 149,
+            price: 99,
+            category: "Electronics",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181098/kfpfs4bjsimryqebwmqi.png"],
+            storeId: store.id
+        },
+        {
+            name: "Robot Vacuum",
+            description: "Auto cleaning, App control, 120min battery",
+            mrp: 299,
+            price: 199,
+            category: "Home & Kitchen",
+            images: ["https://res.cloudinary.com/dqkjlbgpm/image/upload/v1774181099/kkpv4vwfkcbscvpypzcp.png"],
+            storeId: store.id
+        },
+    ]
+
+    for (const product of products) {
+        await prisma.product.create({ data: product })
+        console.log('Created:', product.name)
+    }
+
+    console.log('✅ All done!')
+}
+
+main()
+    .catch(console.error)
+    .finally(() => prisma.$disconnect())

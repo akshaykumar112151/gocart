@@ -1,22 +1,44 @@
 'use client'
-
-import { Star } from 'lucide-react';
+import { Star, XIcon } from 'lucide-react';
 import React, { useState } from 'react'
-import { XIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { addRating } from '@/lib/features/rating/ratingSlice';
 
 const RatingModal = ({ ratingModal, setRatingModal }) => {
-
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
+    const dispatch = useDispatch();
 
     const handleSubmit = async () => {
-        if (rating < 0 || rating > 5) {
-            return toast('Please select a rating');
+        if (rating < 1 || rating > 5) {
+            throw new Error('Please select a rating');
         }
         if (review.length < 5) {
-            return toast('write a short review');
+            throw new Error('Write a short review (min 5 chars)');
         }
+
+        const res = await fetch('/api/rating/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                productId: ratingModal.productId,
+                orderId: ratingModal.orderId,
+                rating,
+                review
+            })
+        });
+
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Something went wrong');
+
+        // Redux update — page refresh ke bina bhi star dikhega
+        dispatch(addRating({
+            orderId: ratingModal.orderId,
+            productId: ratingModal.productId,
+            rating,
+            review
+        }));
 
         setRatingModal(null);
     }
@@ -39,12 +61,19 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
                 </div>
                 <textarea
                     className='w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-400'
-                    placeholder='Write your review (optional)'
+                    placeholder='Write your review (min 5 characters)'
                     rows='4'
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
                 ></textarea>
-                <button onClick={e => toast.promise(handleSubmit(), { loading: 'Submitting...' })} className='w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition'>
+                <button
+                    onClick={() => toast.promise(handleSubmit(), {
+                        loading: 'Submitting...',
+                        success: 'Rating submitted!',
+                        error: (err) => err.message || 'Failed!'
+                    })}
+                    className='w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition'
+                >
                     Submit Rating
                 </button>
             </div>
